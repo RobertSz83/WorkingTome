@@ -1,0 +1,134 @@
+#include <iostream>
+#include <ctime>
+#include <vector>
+
+class TimeEntry {
+private:
+    time_t loginTime;
+    time_t logoutTime;
+
+public:
+    TimeEntry() {
+        loginTime = time(0);
+        logoutTime = 0;
+    }
+
+    void logout() {
+        logoutTime = time(0);
+    }
+
+    double calculateHours() const { // Dodajemy const
+        if (logoutTime == 0) {
+            return 0;
+        }
+        return difftime(logoutTime, loginTime) / 3600.0;
+    }
+
+    time_t getLoginTime() const {
+        return loginTime;
+    }
+
+    time_t getLogoutTime() const {
+        return logoutTime;
+    }
+};
+
+class Payroll {
+private:
+    double hourlyRate;
+    std::vector<TimeEntry> timeEntries;
+
+public:
+    Payroll(double rate) : hourlyRate(rate) {}
+
+    void addTimeEntry() {
+        timeEntries.push_back(TimeEntry());
+        std::cout << "Logged in at: " << getTimeAsString(timeEntries.back().getLoginTime());
+    }
+
+    void logoutLastEntry() {
+        if (!timeEntries.empty()) {
+            timeEntries.back().logout();
+            std::cout << "Logged out at: " << getTimeAsString(timeEntries.back().getLogoutTime());
+        }
+    }
+
+    double calculateTotalHours() {
+        double totalHours = 0;
+        for (const auto& entry : timeEntries) {
+            totalHours += entry.calculateHours();
+        }
+        return totalHours;
+    }
+
+    double calculateTotalEarnings() {
+        return calculateTotalHours() * hourlyRate;
+    }
+
+    double calculateWeeklyEarnings() {
+        return calculateTotalEarnings() * 4; // Assuming 4 weeks in a month
+    }
+
+    double calculateMonthlyEarnings() {
+        return calculateTotalEarnings() * 16; // Assuming 16 weeks in 4 weeks
+    }
+
+    std::string getTimeAsString(time_t time) {
+        struct tm timeinfo;
+        char buffer[80];
+
+        localtime_r(&time, &timeinfo);
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
+
+        return buffer;
+    }
+};
+
+int main() {
+    double hourlyRate;
+    std::cout << "Enter your hourly rate (£ per hour): ";
+    std::cin >> hourlyRate;
+
+    Payroll payroll(hourlyRate);
+
+    char choice;
+    do {
+        std::cout << "1. Log in" << std::endl;
+        std::cout << "2. Log out" << std::endl;
+        std::cout << "3. Calculate total hours worked" << std::endl;
+        std::cout << "4. Calculate total earnings" << std::endl;
+        std::cout << "5. Calculate weekly earnings" << std::endl;
+        std::cout << "6. Calculate monthly earnings" << std::endl;
+        std::cout << "0. Exit" << std::endl;
+        std::cout << "Enter your choice: ";
+        std::cin >> choice;
+
+        switch (choice) {
+        case '1':
+            payroll.addTimeEntry();
+            break;
+        case '2':
+            payroll.logoutLastEntry();
+            break;
+        case '3':
+            std::cout << "Total hours worked: " << payroll.calculateTotalHours() << " hours" << std::endl;
+            break;
+        case '4':
+            std::cout << "Total earnings: £" << payroll.calculateTotalEarnings() << std::endl;
+            break;
+        case '5':
+            std::cout << "Weekly earnings: £" << payroll.calculateWeeklyEarnings() << std::endl;
+            break;
+        case '6':
+            std::cout << "Monthly earnings: £" << payroll.calculateMonthlyEarnings() << std::endl;
+            break;
+        case '0':
+            std::cout << "Exiting the program." << std::endl;
+            break;
+        default:
+            std::cout << "Invalid choice. Try again." << std::endl;
+        }
+    } while (choice != '0');
+
+    return 0;
+}
